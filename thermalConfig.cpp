@@ -577,7 +577,7 @@ namespace implementation {
 		},
 		{
 			TemperatureType::SKIN,
-			{ "quiet-therm-usr" },
+			{ "quiet_therm" },
 			"skin",
 			40000,
 			95000,
