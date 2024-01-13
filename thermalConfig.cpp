@@ -30,10 +30,13 @@
 
 #include <unordered_map>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android/hardware/thermal/2.0/IThermal.h>
 
 #include "thermalData.h"
 #include "thermalConfig.h"
+
+using android::base::GetProperty;
 
 namespace android {
 namespace hardware {
@@ -999,6 +1002,52 @@ namespace implementation {
 		{450, shima_specific}, // shima
 	};
 
+// Device configs
+	std::vector<struct target_therm_cfg> sensor_cfg_milanf =
+	{
+		{
+			TemperatureType::CPU,
+			cpu_sensors_lito,
+			"",
+			95000,
+			115000,
+			95000,
+			true,
+		},
+		{
+			TemperatureType::GPU,
+			{ "gpuss-0-usr" },
+			"gpu0",
+			95000,
+			115000,
+			95000,
+			true,
+		},
+		{
+			TemperatureType::GPU,
+			{ "gpuss-1-usr" },
+			"gpu1",
+			95000,
+			115000,
+			95000,
+			true,
+		},
+		{
+			TemperatureType::SKIN,
+			{ "quiet_therm" },
+			"skin",
+			40000,
+			95000,
+			40000,
+			true,
+		},
+	};
+
+        const std::unordered_map<std::string, std::vector<struct target_therm_cfg>>
+                device_cfg_map = {
+		{"milanf", sensor_cfg_milanf},
+	};
+
 	std::vector<struct target_therm_cfg> add_target_config(
 			int socID,
 			std::vector<struct target_therm_cfg> conf)
@@ -1017,12 +1066,24 @@ namespace implementation {
 	ThermalConfig::ThermalConfig():cmnInst()
 	{
 		std::unordered_map<int, std::vector<struct target_therm_cfg>>::const_iterator it;
+		std::unordered_map<std::string, std::vector<struct target_therm_cfg>>::const_iterator dit;
 		std::vector<struct target_therm_cfg>::iterator it_vec;
 		bool bcl_defined = false;
 		std::string soc_val;
+		std::string device;
 
 		if (cmnInst.readFromFile(socIDPath, soc_val) <= 0) {
 			LOG(ERROR) <<"soc ID fetch error";
+			return;
+		}
+		device = GetProperty("ro.boot.device", "");
+		dit = device_cfg_map.find(device);
+		if (dit == device_cfg_map.end()) {
+			LOG(INFO) << "No config for device: " << device;
+		} else {
+			thermalConfig = dit->second;
+			thermalConfig.push_back(bat_conf);
+			LOG(DEBUG) << "Total sensors:" << thermalConfig.size();
 			return;
 		}
 		soc_id = std::stoi(soc_val, nullptr, 0);
