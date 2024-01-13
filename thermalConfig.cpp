@@ -587,15 +587,6 @@ namespace implementation {
 			40000,
 			true,
 		},
-		{
-			TemperatureType::BCL_CURRENT,
-			{ "pm7250b-ibat-lvl0" },
-			"ibat",
-			5500,
-			6000,
-			5500,
-			true,
-		},
 	};
 
 	std::vector<std::string> cpu_sensors_kona =
@@ -1097,16 +1088,7 @@ namespace implementation {
 			return;
 		}
 		thermalConfig = add_target_config(soc_id, it->second);
-		for (it_vec = thermalConfig.begin();
-				it_vec != thermalConfig.end(); it_vec++) {
-			if (it_vec->type == TemperatureType::BCL_PERCENTAGE)
-				bcl_defined = true;
-		}
-
 		thermalConfig.push_back(bat_conf);
-		if (!bcl_defined)
-			thermalConfig.insert(thermalConfig.end(),
-				bcl_conf.begin(), bcl_conf.end());
 		LOG(DEBUG) << "Total sensors:" << thermalConfig.size();
 	}
 }  // namespace implementation
